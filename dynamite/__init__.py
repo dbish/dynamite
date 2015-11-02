@@ -8,12 +8,14 @@ from config import url
 from .enums import *
 from .utils import *
 
+__version__ = "0.0.1"
+
 __all__ = [
-    'dynamo_stream_event_handler'
+    'dynamo_streams_event_handler'
 ]
 
 
-def dynamo_stream_event_handler(dynamo_stream_event, context):
+def dynamo_streams_event_handler(dynamo_stream_event, context):
     try:
         metadata = MetaData()
         engine = create_engine(url, poolclass=NullPool)
@@ -145,9 +147,9 @@ def get_item(conn, keys, item, table, create_missing=True):
     return result, ItemState.new
 
 
-def main():
-    from test_utils import create_event, prepare_test
-    lambda_handler(create_event(distinct=1000, event_count=1000), None)
+def _test():
+    from test_utils import create_event_records
+    dynamo_streams_event_handler(create_event_recrords(distinct=1000, event_count=1000), None)
 
 if __name__ == '__main__':
-    main()
+    _test()

@@ -5,22 +5,14 @@ from pprint import pprint
 import boto3
 from datetime import datetime
 
-from sqlalchemy import create_engine, Column, Table, MetaData, Text, BigInteger, DateTime
+from sqlalchemy import create_engine, Table, MetaData
 from sqlalchemy.pool import NullPool
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import sql
 
-from enums import DataType
+from dyanmite.enums import DataType
 from json_gen import DynamoAttributeGenerator
 
 from config import url
-
-def default_columns():
-    return [
-        Column('item', JSONB),
-        Column('modify_time', DateTime, default=datetime.now, onupdate=datetime.now),
-        Column('create_time', DateTime, default=datetime.now)
-    ]
 
 
 def main():
@@ -38,14 +30,13 @@ def main():
         keys = response['KeySchema']
         attrs = response['AttributeDefinitions']
 
-        # map column/table names to postgres appropriate names
-        columns = [Column(key['AttributeName'], Text, primary_key=True) for key in keys] + default_columns()
-
+        columns = table_columns(keys)
         table_obj = Table(response['TableName'], metadata, *columns)
 
         print(repr(table_obj))
+        print()
 
-    engine = create_engine(url)
+    engine = create_engine(url, poolclass=NullPool)
     metadata.create_all(engine)
 
 

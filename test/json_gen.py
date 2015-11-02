@@ -1,3 +1,6 @@
+"""
+Generate randomly populated json and dynamo types.
+"""
 import sys
 import random
 import math
@@ -6,8 +9,12 @@ import json
 from decimal import Decimal
 from functools import partial, wraps
 
-from enums import DataType
-##-----------------------------------------------------------------------
+from dyanmite.enums import DataType
+
+__all__ = [
+    'JsonGenerator',
+    'DynamoAttributeGenerator'
+]
 
 class JsonGenerator(object):
     """modified from: https://github.com/maxtaco/python-random-json"""

@@ -6,7 +6,7 @@ import boto3
 
 
 from dynamite.enums import DataType
-from .json_gen import DynamoAttributeGenerator
+from dynamite.test.generators import DynamoAttributeGenerator
 
 STD_SLEEP_INT = .150 # 500ms
 
