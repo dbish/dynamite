@@ -1,0 +1,4 @@
+# The lambda execution environment contains boto3: https://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html
+#
+sqlalchemy
+pg8000
