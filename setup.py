@@ -2,8 +2,8 @@
 dynamite
 ========
 
-Use dynamite to keep a postgres replica of a dynamodb
-table(s). At its core, dynamite is an AWS Lambda event handler for
+Use dynamite to keep a postgres replica of one or more dynamodb
+tables. At its core, dynamite is an AWS Lambda event handler for
 processing dynamodb streams record events and shuttling those record
 events into an associated postgres database. Dynamite only has a
 couple of pure python dependencies all of which make it easy to make
