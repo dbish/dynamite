@@ -1,16 +1,22 @@
+"""
+Introspect an account's dynamo tables for a certain region and
+create the schema in the corresponding postgres database to reflect
+that.
+"""
 import time
 import uuid
 import random
 from pprint import pprint
-import boto3
 from datetime import datetime
+
+import boto3
 
 from sqlalchemy import create_engine, Table, MetaData
 from sqlalchemy.pool import NullPool
 from sqlalchemy import sql
 
 from dyanmite.enums import DataType
-from json_gen import DynamoAttributeGenerator
+from dynamite.test.generators import DynamoAttributeGenerator
 
 from config import url
 

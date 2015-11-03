@@ -9,12 +9,46 @@ import json
 from decimal import Decimal
 from functools import partial, wraps
 
-from dyanmite.enums import DataType
+from ..enums import DataType
+from .data import templates, ipsum_words, test_table_name
 
 __all__ = [
     'JsonGenerator',
-    'DynamoAttributeGenerator'
+    'DynamoAttributeGenerator',
+    'create_event_records',
+    'infinity',
+    'default_event_records',
 ]
+
+def infinity():
+
+    count = 0
+    while True:
+        count += 1
+        yield count
+
+def generate_events(distinct=10, event_count=250):
+
+    item_names = ['item-{}'.format(i) for i in range(distinct)]
+
+    events = range(event_count) if event_count is not None else infinity()
+
+    for sequence_number in events:
+        template = random.choice(templates)
+        subs = { 'NAME' : random.choice(item_names),
+                 'MESSAGE' : ' '.join(random.sample(ipsum_words, 10)),
+                 'TABLE' : test_table_name,
+                 'SEQUENCE_NUMBER' : sequence_number
+        }
+        yield eval(template % subs)
+
+
+def create_event_records(distinct=10, event_count=250):
+    return {
+        "Records": generate_events(distinct, event_count),
+    }
+
+default_event_records = create_event_records()
 
 class JsonGenerator(object):
     """modified from: https://github.com/maxtaco/python-random-json"""

@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from sqlalchemy import sql, create_engine, MetaData
 from sqlalchemy.pool import NullPool
@@ -16,6 +17,9 @@ __all__ = [
 
 
 def dynamo_streams_event_handler(dynamo_stream_event, context):
+    """Entry point for AWS Lambda"""
+
+    conn = None
     try:
         metadata = MetaData()
         engine = create_engine(url, poolclass=NullPool)
@@ -24,7 +28,7 @@ def dynamo_streams_event_handler(dynamo_stream_event, context):
 
         return process_stream_records(conn, dynamo_stream_event['Records'], metadata)
     finally:
-        conn.close()
+        if conn is not None: conn.close()
 
 
 def process_stream_records(conn, records, metadata):
@@ -91,7 +95,7 @@ def handle_modify(conn, record, table):
 
 
     primary_key = primary_key_stmt(keys, table)
-    update = table.update().where(primary_key).values(item=json.dumps(item))
+    update = table.update().where(primary_key).values(item=json.dumps(item), modify_time=datetime.now())
     conn.execute(update)
 
     print('Item updated')
@@ -139,17 +143,13 @@ def get_item(conn, keys, item, table, create_missing=True):
     insert_values = dict(result)
     insert_values['item'] = json.dumps(insert_values['item'])
 
+    now = datetime.now()
+    insert_values['modify_time'] = now
+    insert_values['create_time'] = now
+
     #: Add try catch
     insert = table.insert().values(insert_values)
     conn.execute(insert)
 
     print('new item')
     return result, ItemState.new
-
-
-def _test():
-    from test_utils import create_event_records
-    dynamo_streams_event_handler(create_event_recrords(distinct=1000, event_count=1000), None)
-
-if __name__ == '__main__':
-    _test()

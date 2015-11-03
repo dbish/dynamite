@@ -1,14 +1,17 @@
+"""
+Load a dynamo table with randomly generated data
+"""
 import time
 import uuid
 import random
 from pprint import pprint
 import boto3
 
-
 from dynamite.enums import DataType
 from dynamite.test.generators import DynamoAttributeGenerator
 
-STD_SLEEP_INT = .150 # 500ms
+MILLIS_PER_SEC = 1000.0
+STD_SLEEP_INT = 150 / MILLIS_PER_SEC
 
 animals = ['moose', 'mouse', 'mantis', 'moth', 'dog', 'cat', 'snake']
 
@@ -26,7 +29,8 @@ def generate_items(item_count=100):
             'genus-id' : { 'S' : '{}-{}'.format(random.choice(animals), uuid.uuid4().hex[:9]) },
             'species-id' : { 'S' : str(random.randint(9999, 100000)) }}
         try:
-            obj.update(g.map(4)[DataType.map])
+            random_fields = g.map(4)[DataType.map]
+            obj.update(random_fields)
         except Exception as e:
             print(e)
             continue
