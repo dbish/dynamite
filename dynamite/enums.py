@@ -55,7 +55,7 @@ DataType = Enum('DataType',
     number_set='NS',
     string_set='SS')
 
-ItemState = Enum('ItemRowState',
+ItemState = Enum('ItemState',
     does_not_exist='does_not_exist',
     exists='exists',
     new='new')
