@@ -1,0 +1,93 @@
+#!/usr/bin/env python
+"""
+Load a dynamo table with randomly generated data
+"""
+from __future__ import print_function
+
+import argparse
+import time
+import uuid
+import random
+
+from pprint import pprint
+
+import boto3
+
+from dynamite.enums import DataType
+from dynamite.test.generators import DynamoAttributeGenerator, infinity
+
+MILLIS_PER_SEC = 1000.0
+STD_SLEEP_INT = 150 / MILLIS_PER_SEC
+
+animals = ['eagle', 'bison', 'mongoose', 'badger', 'moose', 'mouse', 'mantis', 'moth', 'dog', 'cat', 'snake']
+
+import config
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Load a dynamo table with randomly generated data. '
+        'The defaults are tuned by default to use between 5 and 10 write iops.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('-t', '--table', type=str, action='store',
+        required=True, help='The name of the table to load')
+
+    parser.add_argument('-k', '--hash-key', type=str, action='store',
+        required=True, help='table hash key')
+
+    parser.add_argument('-r', '--range-key', type=str, action='store', default=None,
+        required=False, help='table range key')
+
+    parser.add_argument('-f', '--fields', type=int, action='store', default=4,
+        required=False, help='The number of non-key fields for each randomly generated item')
+
+    parser.add_argument('-i', '--items', type=int, action='store', default=100,
+        required=False, help='number of unique items to put to the table')
+
+    args = parser.parse_args()
+    return args
+
+
+def generate_items(hash_key, range_key=None, fields=4, items=100):
+
+    item_range = range(items) if items > 0 else infinity()
+    generate = DynamoAttributeGenerator()
+
+    for i in item_range:
+        obj= { hash_key : { 'S' : '{}-{}'.format(random.choice(animals), uuid.uuid4().hex[:9]) }}
+
+        if range_key is not None:
+            obj[range_key] =  { 'S' : str(random.randint(9999, 100000)) }
+
+        try:
+            dynamo_map_item = generate.map(fields)
+
+            # extract the fields from the dict { 'M' : {...map...}}
+            random_fields = dynamo_map_item[DataType.map]
+            obj.update(random_fields)
+        except Exception as e:
+            print(e)
+            continue
+
+        yield obj
+
+def main():
+    client = boto3.client('dynamodb', config.region)
+    args = parse_args()
+
+    item_generator = generate_items(hash_key=args.hash_key, range_key=args.range_key, fields=args.fields, items=args.items)
+
+    for i, item in enumerate(item_generator):
+
+        print('Put item {}: {}'.format(i, item[args.hash_key]))
+        try:
+            client.put_item(TableName=args.table, Item=item)
+        except Exception as e:
+            print(e)
+
+        time.sleep(STD_SLEEP_INT)
+
+
+
+
+if __name__ == '__main__':
+    main()
