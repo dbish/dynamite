@@ -1,0 +1,93 @@
+#!/usr/bin/env python
+from __future__ import print_function
+"""
+Introspect an account's dynamo tables for a certain region and
+create the schema in the corresponding postgres database to reflect
+that.
+"""
+from pprint import pprint
+from datetime import datetime
+from itertools import chain
+
+import boto3
+
+from sqlalchemy import create_engine, Table, MetaData
+from sqlalchemy.pool import NullPool
+
+from dynamite.utils import table_columns
+import config
+
+
+def main():
+
+    engine = create_engine(config.url, poolclass=NullPool, echo=True)
+    metadata = MetaData()
+
+    conn = engine.connect()
+    conn.execute('COMMIT')
+
+    existing_tables = conn.execute("SELECT table_name FROM information_schema.tables "
+            "WHERE table_schema='public' ORDER BY table_name;").fetchall()
+
+    existing_tables = set(chain.from_iterable(existing_tables))
+
+
+    client = boto3.client('dynamodb', config.region)
+    dynamodb_tables = client.list_tables()['TableNames']
+
+
+    print('Found {} dynamodb tables.'.format(len(dynamodb_tables)))
+    print()
+
+
+
+    tables_to_create = []
+
+    for table in dynamodb_tables:
+        response = client.describe_table(TableName=table)['Table']
+
+        tablename = response['TableName']
+        tables_to_create.append(tablename)
+
+        keys = response['KeySchema']
+        attrs = response['AttributeDefinitions']
+
+        print('DynamoDB Table: {}'.format(table))
+        print('  Schema:')
+        for key in response['KeySchema']:
+            print('    {:>5}: {}'.format(key['KeyType'], key['AttributeName']))
+
+        print()
+
+
+        columns = table_columns(keys)
+        table_obj = Table(tablename, metadata, *columns)
+
+        print('Postgres Table: {}'.format(tablename))
+        print('  Schema:')
+        for column in table_obj.c.values():
+            print('    {}'.format(repr(column)))
+
+        print()
+
+    print()
+    metadata.create_all(engine)
+    print()
+
+
+    query_result = conn.execute("SELECT table_name FROM information_schema.tables "
+            "WHERE table_schema='public' ORDER BY table_name;").fetchall()
+    conn.close()
+    print()
+
+    all_tables = set(chain.from_iterable(query_result))
+    new_tables = sorted(list(all_tables - existing_tables))
+
+    print('Created {} new tables'.format(len(new_tables)))
+    for i, tablename in enumerate(new_tables, start=1):
+        print('  {}) Table: {}'.format(i, tablename))
+
+    print('Done!')
+
+if __name__ == '__main__':
+    main()

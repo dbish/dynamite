@@ -27,7 +27,7 @@ def primary_key_stmt(keys, table):
 def default_columns():
     return [
         Column('item', JSONB),
-        Column('modify_time', DateTime, default=datetime.now, onupdate=datetime.now),
+        Column('mod_time', DateTime, default=datetime.now, onupdate=datetime.now),
         Column('create_time', DateTime, default=datetime.now)
     ]
 

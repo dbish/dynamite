@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+from __future__ import print_function
+
+import argparse
+
+from dynamite import dynamo_streams_event_handler
+from dynamite.test.utils import prepare_test, cleanup_test
+from dynamite.test.generators import create_event_records
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Verify that the stream handler is '
+            'putting stream events to the database by creating a new test table '
+            'and feeding randomly generated streams events through the handler.',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('--items', type=int, action='store', default=10,
+        help='number of unique items')
+
+    parser.add_argument('--events', type=int, action='store', default=150,
+        help='The number of random streams events distributed across the unique items')
+
+    args = parser.parse_args()
+    return args
+
+def test_main():
+    args = parse_args()
+
+    event = create_event_records(distinct=args.items, event_count=args.events)
+    context = None
+
+    prepare_test()
+    result = dynamo_streams_event_handler(event, context)
+    cleanup_test()
+
+    print()
+    print(result)
+
+if __name__ == '__main__':
+    test_main()
