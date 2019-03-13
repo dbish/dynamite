@@ -95,7 +95,7 @@ def handle_modify(conn, record, table):
 
 
     primary_key = primary_key_stmt(keys, table)
-    update = table.update().where(primary_key).values(item=json.dumps(item), mod_time=datetime.now())
+    update = table.update().where(primary_key).values(item=item, mod_time=datetime.now())
     conn.execute(update)
 
     print('Item updated')
@@ -141,7 +141,7 @@ def get_item(conn, keys, item, table, create_missing=True):
     result['item'] = dict(item)
 
     insert_values = dict(result)
-    insert_values['item'] = json.dumps(insert_values['item'])
+    insert_values['item'] = insert_values['item']
 
     now = datetime.now()
     insert_values['mod_time'] = now

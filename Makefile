@@ -9,7 +9,7 @@ zip:
 	pip install -t ${DEPLOYABLE} -r requirements-lambda.txt
 	cp config.py ${DEPLOYABLE}
 	cp -R dynamite/ ${DEPLOYABLE}
-	zip -rm ${DEPLOYABLE}.zip ${DEPLOYABLE}
+	cd ${DEPLOYABLE} && zip -rm ${DEPLOYABLE}.zip .
 
 clean:
 	-rm -rf ${PREFIX}*

@@ -1,6 +1,7 @@
 import re
 from operator import and_
 from datetime import datetime
+from functools import reduce
 
 from sqlalchemy import create_engine, Column, Table, MetaData, Text, BigInteger, DateTime
 from sqlalchemy.pool import NullPool
@@ -22,7 +23,7 @@ def parse_arn(arn):
 
 def primary_key_stmt(keys, table):
     """combine the individual equalities incase of composite primary keys"""
-    return reduce(and_, [table.c.get(key) == value for key, value in keys.iteritems()])
+    return reduce(and_, [table.c.get(key) == value for key, value in keys.items()])
 
 def default_columns():
     return [
@@ -41,7 +42,7 @@ def image_as_item(image):
 
     item = {}
 
-    for column_name, field in image.iteritems():
+    for column_name, field in image.items():
         data_type, value = next(iter(field.items()))
 
         if data_type == DataType.number:
